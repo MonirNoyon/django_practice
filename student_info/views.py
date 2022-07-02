@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from .models import Student
-from .serializers import StudentSerializer
+from .serializers import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from knox.auth import AuthToken
+from django.contrib.auth.models import User
 from django.db.models import Q
 # Create your views here.
 
@@ -92,5 +93,38 @@ def user_token_check(request):
             "username": user.username,
             "email": user.email
         },
+    })
+
+@api_view(['POST'])
+def student_login(request):
+    serializer = StuSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    student = serializer.validated_data['student']
+    _,token = AuthToken.objects.create(student)
+
+    return Response({
+        "user_info":{
+            "id": student.id,
+            "name":student.name,
+            "email":student.mail
+        },
+        "token":token
+    })
+
+
+@api_view(['POST'])
+def user_registration(request):
+    serializer = RegistrationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+
+    _,token = AuthToken.objects.create(user)
+    return Response({
+        "user_info":{
+            "id": user.id,
+            "name":user.username,
+            "email":user.email
+        },
+        "token":token
     })
 
